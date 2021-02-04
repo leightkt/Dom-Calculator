@@ -1,62 +1,89 @@
-let userInput = []
+let userInput = ""
 const $screen = document.querySelector("#screen")
 const $clear = document.querySelector("#clear")
 const $equals = document.querySelector("#equals")
 const $spans = document.querySelectorAll("span")
 
-// document.addEventListener('DOMContentLoaded', function(){
-//     $screen = document.querySelector("#screen")
-//     $clear = document.querySelector("#clear")
-//     $equals = document.querySelector("#equals")
-//     $spans = document.querySelectorAll("span")
-// })
+calculatorAction()
 
-startCalculator()
-
-function startCalculator(){
-    addClearAction($clear, $screen, userInput)
-    addClickToSpans($spans, $screen, userInput)
-    addEqualsAction($equals, $screen, userInput)
+function calculatorAction(){
+if (addClearAction()){
+    userInput = addClearAction()
 }
 
-function addClickToSpans($spans, $screen, userInput){
+if (addClickToSpans()){
+    userInput = addClickToSpans()
+}
+
+if (addEqualsAction()){
+    userInput = addEqualsAction()
+}
+}
+
+function addClickToSpans(){
     $spans.forEach(span => {
         if (span.id !== 'clear' && span.id !== 'equals'){
             span.addEventListener('click', (event)=>{
-                displayClickValue(event.target, $screen)
-                userInput.push(event.target.innerText)
+                userInput = updateValue(event.target, $screen)
                 console.log(userInput)
+                return userInput
             })
         }
     })
 }
 
-function displayClickValue(span, $screen){
-    $screen.innerText = span.innerText
+function updateValue(span, $screen){
+    if (isNaN(parseInt(span.innerText))){
+        $screen.innerText = span.innerText
+        userInput += span.innerText
+    } else {
+        if (isNaN(parseInt($screen.innerText))){
+            $screen.innerText = span.innerText
+        } else {
+            $screen.innerText += span.innerText
+        }
+        userInput += span.innerText
+    }
+    return userInput
 }
 
-function addClearAction($clear, $screen, userInput){
+function addClearAction(){
     $clear.addEventListener('click', (event)=>{
         $screen.innerText = ""
         userInput = clearInput()
+        return userInput
     })
 }
 
-function addEqualsAction($equals, $screen, userInput, operatorValues){
+function addEqualsAction(){
     $equals.addEventListener('click', (event)=>{
+        userInput = substituteDivAndMultOperators()
         console.log(userInput)
-        if (eval(userInput.join(' '))){
-            $screen.innerText = eval(userInput.join(' '))
+        try {
+            eval(userInput)
+        } catch (e) {
+            if (e instanceof SyntaxError){
+                $screen.innerText = `Error`
+            } 
+        }
+        if (eval(userInput) !== Infinity){
+            $screen.innerText = eval(userInput)
+            
         } else {
-            $screen.innerText
+            $screen.innerText = `Error`
         }
         userInput = clearInput()
+        return userInput
     })
+}
+
+function substituteDivAndMultOperators(){
+    userInput = userInput.replace('x', '*')
+    userInput = userInput.replace('÷', '/')
+    return userInput
 }
 
 function clearInput(){
-    while (userInput.length > 0){
-        userInput.pop()
-    }
+    userInput = ""
     return userInput
 }
