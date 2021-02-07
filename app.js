@@ -2,88 +2,127 @@ let userInput = ""
 const $screen = document.querySelector("#screen")
 const $clear = document.querySelector("#clear")
 const $equals = document.querySelector("#equals")
-const $spans = document.querySelectorAll("span")
+const $allspans = document.querySelectorAll("span")
+const $digitbuttons = Array.from($allspans).filter(button => button.id !== 'clear' && button.id !== 'equals')
 
-calculatorAction()
+addCalculatorButtonEvents()
 
-function calculatorAction(){
-if (addClearAction()){
-    userInput = addClearAction()
+function addCalculatorButtonEvents(){
+    clearAction()
+    spanAction()
+    equalsAction()
 }
 
-if (addClickToSpans()){
-    userInput = addClickToSpans()
-}
-
-if (addEqualsAction()){
-    userInput = addEqualsAction()
-}
-}
-
-function addClickToSpans(){
-    $spans.forEach(span => {
-        if (span.id !== 'clear' && span.id !== 'equals'){
-            span.addEventListener('click', (event)=>{
-                userInput = updateValue(event.target, $screen)
-                console.log(userInput)
-                return userInput
-            })
-        }
+function spanAction(){
+    $digitbuttons.forEach(span => {
+        span.addEventListener('click', (event)=>{
+            updateScreenValue(event.target)
+            updateUserInputValue(event.target)
+        })
     })
 }
 
-function updateValue(span, $screen){
-    if (isNaN(parseInt(span.innerText))){
+function updateScreenValue(span){
+    if (isNotaNumber(span.innerText) || isNotaNumber($screen.innerText)){
         $screen.innerText = span.innerText
-        userInput += span.innerText
     } else {
-        if (isNaN(parseInt($screen.innerText))){
-            $screen.innerText = span.innerText
-        } else {
-            $screen.innerText += span.innerText
-        }
+        $screen.innerText += span.innerText
+    }
+}
+
+function updateUserInputValue(span){
+    if (isNotaNumber(span.innerText)){
+        userInput += ` ${span.innerText} `
+    } else {
         userInput += span.innerText
     }
-    return userInput
 }
 
-function addClearAction(){
+function clearAction(){
     $clear.addEventListener('click', (event)=>{
-        $screen.innerText = ""
-        userInput = clearInput()
-        return userInput
+        clearScreen()
+        clearInput()
     })
 }
 
-function addEqualsAction(){
+function equalsAction(){
     $equals.addEventListener('click', (event)=>{
-        userInput = substituteDivAndMultOperators()
-        console.log(userInput)
-        try {
-            eval(userInput)
-        } catch (e) {
-            if (e instanceof SyntaxError){
-                $screen.innerText = `Error`
-            } 
-        }
-        if (eval(userInput) !== Infinity){
-            $screen.innerText = eval(userInput)
-            
+        splitInput()
+        if (checkOrder()){
+            checkCalculation()
         } else {
-            $screen.innerText = `Error`
+            $screen.innerText = 'Error'
+            clearInput()
         }
-        userInput = clearInput()
-        return userInput
     })
+}
+
+function checkCalculation(){
+    if (calculate() === Infinity){
+        $screen.innerText = 'Error'
+        clearInput()
+    } else {
+        $screen.innerText = calculate()
+        userInput = calculate()
+    }
 }
 
 function substituteDivAndMultOperators(){
     userInput = userInput.replace('x', '*')
     userInput = userInput.replace('÷', '/')
-    return userInput
 }
 
 function clearInput(){
     userInput = ""
-    return userInput
+}
+
+function clearScreen(){
+    $screen.innerText = ""
+}
+
+function splitInput(){
+    substituteDivAndMultOperators()
+    userInput = userInput.split(' ')
+}
+
+function isNotaNumber(input){
+    return isNaN(parseInt(input))
+}
+
+function checkOrder(){
+    let value = true
+    userInput.forEach((input, index)=>{
+        if(index % 2 === 0){
+            if (isNotaNumber(input)){
+                value = false
+            }
+        }
+    })
+    return value
+}
+
+function calculate(){
+    let total = parseInt(userInput[0])
+    let operator = null
+    for(i = 1; i < userInput.length; i++){
+        if(i % 2 !== 0){
+            operator = userInput[i]
+        } else {
+            total = findOperator(total, parseInt(userInput[i]), operator)
+        }
+    }
+    return total
+}
+
+function findOperator(total, input, operator){  
+    switch(operator){
+        case '+':
+            return total += input
+        case '-':
+            return total -= input
+        case '*':
+            return total *= input
+        case '/':
+            return total /= input
+    }
 }
